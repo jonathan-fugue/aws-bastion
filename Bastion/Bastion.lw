@@ -14,11 +14,11 @@ type Bastion:
  
 fun amiForRegion(region: AWS.Region) -> String:
   case region of
-    | AWS.Us-east-1 -> "ami-edc7cb87"
-    | AWS.Us-west-1 -> "ami-ade597cd"
-    | AWS.Us-west-2 -> "ami-934ca4f3"
-    | AWS.Eu-west-1 -> "ami-1955d16a"
-    | _ -> AWS.Region.toString(region) ++ " is not supported." 
+    | AWS.Us-east-1 -> "ami-a60c23b0"
+    | AWS.Us-west-1 -> "ami-96f1dcf6"
+    | AWS.Us-west-2 -> "ami-7646530f"
+    | AWS.Eu-west-1 -> "ami-af455dc9"
+    | _ -> AWS.Region.toString(region) ++ " is not supported."
 
 fun new {
       name: String,
