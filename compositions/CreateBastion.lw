@@ -19,7 +19,6 @@ network: Network.new {
 }
 
 jumpHost: Bastion.new {
-  name: "JumpHost",
-  keyName: "Demo",
+  name: "Demo",
   subnets: network.publicSubnets,
 }
