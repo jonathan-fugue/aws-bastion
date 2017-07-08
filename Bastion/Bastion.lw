@@ -1,0 +1,70 @@
+export
+  type Bastion
+  new
+
+import Fugue.AWS.AutoScaling as AutoScaling
+import Fugue.AWS.EC2 as EC2
+import Fugue.AWS as AWS 
+
+type Bastion:
+  | Bastion
+    sg: EC2.SecurityGroup
+    lc: AutoScaling.LaunchConfiguration
+    asg: AutoScaling.AutoScalingGroup
+ 
+fun amiForRegion(region: AWS.Region) -> String:
+  case region of
+    | AWS.Us-east-1 -> "ami-edc7cb87"
+    | AWS.Us-west-1 -> "ami-ade597cd"
+    | AWS.Us-west-2 -> "ami-934ca4f3"
+    | AWS.Eu-west-1 -> "ami-1955d16a"
+    | _ -> AWS.Region.toString(region) ++ " is not supported." 
+
+fun new {
+      name: String,
+      subnets: List<EC2.Subnet>,
+      vpc: Optional<EC2.Vpc>,
+      region: Optional<AWS.Region>,
+      keyName: Optional<String>,
+      image: Optional<String>,
+      instanceType: Optional<EC2.InstanceType>,
+      tags: Optional<List<AWS.Tag>>
+    } -> Bastion:
+  let _vpc: Optional.unpack(List.index(subnets,0).(EC2.Subnet).vpc, vpc)
+  let _region: Optional.unpack(_vpc.(EC2.Vpc).region, region)
+  let _keyName:       Optional.unpack(name, keyName)
+  let _image:         Optional.unpack(amiForRegion(_region), image)
+  let _instanceType:  Optional.unpack(EC2.T2_micro, instanceType)
+  let _extraTags:     Optional.unpack([], tags)
+  let sg: EC2.SecurityGroup.new {
+    description: name ++ "-sg",
+    ipPermissions: [EC2.IpPermission.ssh(EC2.IpPermission.Target.all)],
+    ipPermissionsEgress: None,
+    tags: List.concat([AWS.tag("Name", name)], _extraTags),
+    vpc: _vpc,
+  }
+  let lc: AutoScaling.LaunchConfiguration.new {
+    image: _image,
+    securityGroups: [sg],
+    keyName: _keyName,
+    instanceType: _instanceType,
+    associatePublicIpAddress: True,
+  }
+  let asg: AutoScaling.AutoScalingGroup.new {
+    subnets: subnets,
+    minSize: 1,
+    maxSize: 1,
+    defaultCooldown: 300,
+    healthCheckType: AutoScaling.Ec2,
+    launchConfiguration: lc,
+    tags: List.concat([AWS.tag("Name", name)], _extraTags),
+    enabledMetrics: [
+      AutoScaling.GroupInServiceInstances,
+      AutoScaling.GroupTotalInstances
+    ]
+  }
+  Bastion {
+    sg: sg,
+    lc: lc,
+    asg: asg,
+  }
