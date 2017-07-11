@@ -26,12 +26,14 @@ fun new {
       vpc: Optional<EC2.Vpc>,
       region: Optional<AWS.Region>,
       keyName: Optional<String>,
+      userData: Optional<String>,
       image: Optional<String>,
       instanceType: Optional<EC2.InstanceType>,
       tags: Optional<List<AWS.Tag>>
     } -> Bastion:
   let _vpc: Optional.unpack(List.index(subnets,0).(EC2.Subnet).vpc, vpc)
   let _region: Optional.unpack(_vpc.(EC2.Vpc).region, region)
+  let _userData:      Optional.unpack(" ", userData)
   let _keyName:       Optional.unpack(name, keyName)
   let _image:         Optional.unpack(amiForRegion(_region), image)
   let _instanceType:  Optional.unpack(EC2.T2_micro, instanceType)
@@ -47,6 +49,7 @@ fun new {
     image: _image,
     securityGroups: [sg],
     keyName: _keyName,
+    userData: _userData, 
     instanceType: _instanceType,
     associatePublicIpAddress: True,
   }
